@@ -10,6 +10,10 @@
 
 - chore(tests): enable concurrency [[#19](https://github.com/u-ctf/controller-fwk/pull/19)]
 
+### 📦️ Dependency
+
+- chore(deps): bump kubernetes libraries to 0.34 [[#18](https://github.com/u-ctf/controller-fwk/pull/18)]
+
 ## [1.1.0](https://github.com/u-ctf/controller-fwk/releases/tag/v1.1.0) - 2025-11-17
 
 ### ❤️ Thanks to all contributors! ❤️
