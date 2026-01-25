@@ -12,6 +12,7 @@
 
 ### 🐛 Bug Fixes
 
+- fix(steps): set cr after patch on finalizer's steps [[#22](https://github.com/u-ctf/controller-fwk/pull/22)]
 - fix(dependencies): do not retry on optional dependencies [[#21](https://github.com/u-ctf/controller-fwk/pull/21)]
 - fix(resource): allow resource to be paused individually [[#17](https://github.com/u-ctf/controller-fwk/pull/17)]
 
