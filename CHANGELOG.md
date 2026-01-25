@@ -12,6 +12,7 @@
 
 ### 🐛 Bug Fixes
 
+- fix(dependencies): do not retry on optional dependencies [[#21](https://github.com/u-ctf/controller-fwk/pull/21)]
 - fix(resource): allow resource to be paused individually [[#17](https://github.com/u-ctf/controller-fwk/pull/17)]
 
 ### 📦️ Dependency
