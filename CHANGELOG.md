@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0](https://github.com/u-ctf/controller-fwk/releases/tag/v1.2.0) - 2025-12-17
+## [1.2.0](https://github.com/u-ctf/controller-fwk/releases/tag/v1.2.0) - 2026-01-25
 
 ### ❤️ Thanks to all contributors! ❤️
 
@@ -9,6 +9,10 @@
 ### 📈 Enhancement
 
 - chore(tests): enable concurrency [[#19](https://github.com/u-ctf/controller-fwk/pull/19)]
+
+### 🐛 Bug Fixes
+
+- fix(resource): allow resource to be paused individually [[#17](https://github.com/u-ctf/controller-fwk/pull/17)]
 
 ### 📦️ Dependency
 
