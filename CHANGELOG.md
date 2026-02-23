@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.1](https://github.com/u-ctf/controller-fwk/releases/tag/v1.2.1) - 2026-02-23
+
+### ❤️ Thanks to all contributors! ❤️
+
+@yyewolf
+
+### 🐛 Bug Fixes
+
+- fix(queue): add tests for queue and fix issue [[#25](https://github.com/u-ctf/controller-fwk/pull/25)]
+
 ## [1.2.0](https://github.com/u-ctf/controller-fwk/releases/tag/v1.2.0) - 2026-01-25
 
 ### ❤️ Thanks to all contributors! ❤️
