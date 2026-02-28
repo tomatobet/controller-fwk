@@ -22,7 +22,7 @@ import (
 	ctrlfwk "github.com/u-ctf/controller-fwk"
 	"github.com/u-ctf/controller-fwk/instrument"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,7 +39,7 @@ type TestReconciler struct {
 	client.Client
 	ctrlfwk.WatchCache
 	instrument.Instrumenter
-	record.EventRecorder
+	events.EventRecorder
 
 	RuntimeScheme *runtime.Scheme
 }

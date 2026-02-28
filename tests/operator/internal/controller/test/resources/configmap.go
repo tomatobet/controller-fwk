@@ -80,15 +80,15 @@ func NewConfigMapResource(ctx testv1.TestContext, reconciler ctrlfwk.ReconcilerW
 			return SetStatusConfigMapIsUpToDate(ctx, reconciler)
 		}).
 		WithAfterCreate(func(ctx testv1.TestContext, resource *corev1.ConfigMap) error {
-			reconciler.Eventf(cr, "Normal", "ConfigMapCreated", "ConfigMap %s/%s created", resource.Namespace, resource.Name)
+			reconciler.Eventf(cr, nil, "Normal", "ConfigMapCreated", "ConfigMap %s/%s created", "", "", resource.Namespace, resource.Name)
 			return nil
 		}).
 		WithAfterDelete(func(ctx testv1.TestContext, resource *corev1.ConfigMap) error {
-			reconciler.Eventf(cr, "Normal", "ConfigMapDeleted", "ConfigMap %s/%s deleted", resource.Namespace, resource.Name)
+			reconciler.Eventf(cr, nil, "Normal", "ConfigMapDeleted", "ConfigMap %s/%s deleted", "", "", resource.Namespace, resource.Name)
 			return nil
 		}).
 		WithAfterUpdate(func(ctx testv1.TestContext, resource *corev1.ConfigMap) error {
-			reconciler.Eventf(cr, "Normal", "ConfigMapUpdated", "ConfigMap %s/%s updated", resource.Namespace, resource.Name)
+			reconciler.Eventf(cr, nil, "Normal", "ConfigMapUpdated", "ConfigMap %s/%s updated", "", "", resource.Namespace, resource.Name)
 			return nil
 		}).
 		Build()

@@ -25,12 +25,12 @@ func NewSecretDependency(ctx testv1.TestContext, reconciler ctrlfwk.ReconcilerWi
 		WithAddManagedByAnnotation(true).
 		WithAfterReconcile(func(ctx testv1.TestContext, resource *corev1.Secret) error {
 			if resource.Name == "" {
-				reconciler.Eventf(cr, "Warning", "SecretNotFound", "The required Secret was not found")
+				reconciler.Eventf(cr, nil, "Warning", "SecretNotFound", "The required Secret was not found", "", "")
 				return SetConditionNotFound(ctx, reconciler)
 			}
 
 			if !isSecretReady(resource) {
-				reconciler.Eventf(cr, "Warning", "SecretNotReady", "The required Secret is not ready")
+				reconciler.Eventf(cr, nil, "Warning", "SecretNotReady", "The required Secret is not ready", "", "")
 				return SetConditionNotReady(ctx, reconciler)
 			}
 
@@ -99,7 +99,7 @@ func CleanupStatusOnOK(
 
 	changed := meta.RemoveStatusCondition(&cr.Status.Conditions, "SecretFound")
 	if changed {
-		reconciler.Eventf(cr, "Normal", "SecretFound", "The required Secret was found")
+		reconciler.Eventf(cr, nil, "Normal", "SecretFound", "The required Secret was found", "", "")
 		// If we removed the condition, we need to update the status
 		return ctrlfwk.PatchCustomResourceStatus(ctx, reconciler)
 	}

@@ -83,15 +83,15 @@ func NewUntypedConfigMapResource(ctx testv1.UntypedTestContext, reconciler ctrlf
 			return SetStatusConfigMapIsUpToDateOnUntypedTest(ctx, reconciler)
 		}).
 		WithAfterCreate(func(ctx testv1.UntypedTestContext, resource *unstructured.Unstructured) error {
-			reconciler.Eventf(cr, "Normal", "ConfigMapCreated", "ConfigMap %s/%s created", resource.GetNamespace(), resource.GetName())
+			reconciler.Eventf(cr, nil, "Normal", "ConfigMapCreated", "ConfigMap %s/%s created", "", "", resource.GetNamespace(), resource.GetName())
 			return nil
 		}).
 		WithAfterDelete(func(ctx testv1.UntypedTestContext, resource *unstructured.Unstructured) error {
-			reconciler.Eventf(cr, "Normal", "ConfigMapDeleted", "ConfigMap %s/%s deleted", resource.GetNamespace(), resource.GetName())
+			reconciler.Eventf(cr, nil, "Normal", "ConfigMapDeleted", "ConfigMap %s/%s deleted", "", "", resource.GetNamespace(), resource.GetName())
 			return nil
 		}).
 		WithAfterUpdate(func(ctx testv1.UntypedTestContext, resource *unstructured.Unstructured) error {
-			reconciler.Eventf(cr, "Normal", "ConfigMapUpdated", "ConfigMap %s/%s updated", resource.GetNamespace(), resource.GetName())
+			reconciler.Eventf(cr, nil, "Normal", "ConfigMapUpdated", "ConfigMap %s/%s updated", "", "", resource.GetNamespace(), resource.GetName())
 			return nil
 		}).
 		Build()
