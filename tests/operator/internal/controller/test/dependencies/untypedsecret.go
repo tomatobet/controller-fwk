@@ -26,12 +26,12 @@ func NewUntypedSecretDependency(ctx testv1.UntypedTestContext, reconciler ctrlfw
 		WithAddManagedByAnnotation(true).
 		WithAfterReconcile(func(ctx testv1.UntypedTestContext, resource *unstructured.Unstructured) error {
 			if resource.GetName() == "" {
-				reconciler.Eventf(cr, "Warning", "SecretNotFound", "The required Secret was not found")
+				reconciler.Eventf(cr, nil, "Warning", "SecretNotFound", "The required Secret was not found", "", "")
 				return SetConditionNotFoundOnUntypedTest(ctx, reconciler)
 			}
 
 			if !isUntypedSecretReady(resource) {
-				reconciler.Eventf(cr, "Warning", "SecretNotReady", "The required Secret is not ready")
+				reconciler.Eventf(cr, nil, "Warning", "SecretNotReady", "The required Secret is not ready", "", "")
 				return SetConditionNotReadyOnUntypedTest(ctx, reconciler)
 			}
 
@@ -106,7 +106,7 @@ func CleanupStatusOnOKOnUntypedTest(
 
 	changed := meta.RemoveStatusCondition(&cr.Status.Conditions, "SecretFound")
 	if changed {
-		reconciler.Eventf(cr, "Normal", "SecretFound", "The required Secret was found")
+		reconciler.Eventf(cr, nil, "Normal", "SecretFound", "The required Secret was found", "", "")
 		// If we removed the condition, we need to update the status
 		return ctrlfwk.PatchCustomResourceStatus(ctx, reconciler)
 	}

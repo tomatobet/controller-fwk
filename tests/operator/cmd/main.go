@@ -211,7 +211,7 @@ func main() {
 	if err := (&controller.TestReconciler{
 		Client:        mgr.GetClient(),
 		RuntimeScheme: mgr.GetScheme(),
-		EventRecorder: mgr.GetEventRecorderFor("test"),
+		EventRecorder: mgr.GetEventRecorder("test"),
 		Instrumenter:  instrumenter,
 		WatchCache:    ctrlfwk.NewWatchCache(mgr),
 	}).SetupWithManager(mgr); err != nil {
@@ -221,7 +221,7 @@ func main() {
 	if err := (&controller.UntypedTestReconciler{
 		Client:        mgr.GetClient(),
 		RuntimeScheme: mgr.GetScheme(),
-		EventRecorder: mgr.GetEventRecorderFor("untypedtest"),
+		EventRecorder: mgr.GetEventRecorder("untypedtest"),
 		Instrumenter:  instrumenter,
 		WatchCache:    ctrlfwk.NewWatchCache(mgr),
 	}).SetupWithManager(mgr); err != nil {

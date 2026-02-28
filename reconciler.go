@@ -1,7 +1,7 @@
 package ctrlfwk
 
 import (
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/tools/events"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -37,5 +37,5 @@ type ReconcilerWithResources[ControllerResourceType ControllerCustomResource, Co
 type ReconcilerWithEventRecorder[ControllerResourceType ControllerCustomResource] interface {
 	Reconciler[ControllerResourceType]
 
-	record.EventRecorder
+	events.EventRecorder
 }
