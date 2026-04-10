@@ -22,13 +22,12 @@ func NewInstrumentedReconciler(t Instrumenter, r reconcile.TypedReconciler[recon
 }
 
 func (t *InstrumentedReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
-	logger := t.NewLogger(ctx)
-	ctx = logf.IntoContext(ctx, logger)
-
 	ctxPtr, _ := t.GetContextForRequest(req)
-
 	ctx, span := t.StartSpan(ctxPtr, ctx, "reconcile")
 	defer span.End()
+
+	logger := t.NewLogger(ctx)
+	ctx = logf.IntoContext(ctx, logger)
 
 	result, err := t.internalReconciler.Reconcile(ctx, req)
 	if err != nil {
