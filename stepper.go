@@ -12,7 +12,7 @@ import (
 
 // Stepper is a utility to execute a series of steps in a controller.
 // It allows for easy chaining of steps and handling of errors and requeues.
-// Each step can be a function that returns a GenericStepResult, which indicates
+// Each step can be a function that returns a StepResult, which indicates
 // whether to continue, requeue, or return an error.
 // The Stepper can be used in a controller's Reconcile function to manage
 // the execution of multiple steps in a clean and organized manner.
@@ -63,7 +63,7 @@ func (s *StepperBuilder[K, C]) Build() *Stepper[K, C] {
 	}
 }
 
-type GenericStepResult interface {
+type StepResult interface {
 	// Error returns the underlying step error, if any.
 	Error() error
 
@@ -80,51 +80,53 @@ type GenericStepResult interface {
 	ShouldReturn() bool
 
 	// FromSubStep clears early return semantics when bubbling a nested step result upward.
-	FromSubStep() GenericStepResult
+	FromSubStep() StepResult
 
 	// Normal converts the step result into a controller-runtime reconcile result.
 	Normal() (ctrl.Result, error)
 }
 
-type StepResult struct {
+type basicStepResult struct {
 	earlyReturn  bool
 	err          error
 	requeueAfter time.Duration
 }
 
+var _ StepResult = basicStepResult{}
+
 // Error returns the underlying step error, if any.
-func (result StepResult) Error() error {
+func (result basicStepResult) Error() error {
 	return result.err
 }
 
 // RequeueAfter returns the requested requeue duration, if any.
-func (result StepResult) RequeueAfter() time.Duration {
+func (result basicStepResult) RequeueAfter() time.Duration {
 	return result.requeueAfter
 }
 
 // IsEarlyReturn reports whether the step requested an early return without error.
-func (result StepResult) IsEarlyReturn() bool {
+func (result basicStepResult) IsEarlyReturn() bool {
 	return result.earlyReturn
 }
 
 // IsSuccess reports whether the step completed without error, requeue, or early return.
-func (result StepResult) IsSuccess() bool {
+func (result basicStepResult) IsSuccess() bool {
 	return !result.ShouldReturn()
 }
 
 // ShouldReturn reports whether reconciliation should stop after this step.
-func (result StepResult) ShouldReturn() bool {
+func (result basicStepResult) ShouldReturn() bool {
 	return result.err != nil || result.requeueAfter > 0 || result.earlyReturn
 }
 
 // FromSubStep clears early return semantics when bubbling a nested step result upward.
-func (result StepResult) FromSubStep() GenericStepResult {
+func (result basicStepResult) FromSubStep() StepResult {
 	result.earlyReturn = false
 	return result
 }
 
 // Normal converts the step result into a controller-runtime reconcile result.
-func (result StepResult) Normal() (ctrl.Result, error) {
+func (result basicStepResult) Normal() (ctrl.Result, error) {
 	if result.err != nil {
 		return ctrl.Result{}, result.err
 	}
@@ -134,26 +136,26 @@ func (result StepResult) Normal() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func ResultInError(err error) GenericStepResult {
-	return StepResult{
+func ResultInError(err error) basicStepResult {
+	return basicStepResult{
 		err: err,
 	}
 }
 
-func ResultRequeueIn(result time.Duration) GenericStepResult {
-	return StepResult{
+func ResultRequeueIn(result time.Duration) basicStepResult {
+	return basicStepResult{
 		requeueAfter: result,
 	}
 }
 
-func ResultEarlyReturn() GenericStepResult {
-	return StepResult{
+func ResultEarlyReturn() basicStepResult {
+	return basicStepResult{
 		earlyReturn: true,
 	}
 }
 
-func ResultSuccess() GenericStepResult {
-	return StepResult{}
+func ResultSuccess() basicStepResult {
+	return basicStepResult{}
 }
 
 // FinalStep is an always-run callback executed after the last normal step attempt.
@@ -165,13 +167,13 @@ type FinalStep[K client.Object, C Context[K]] struct {
 	Name string
 
 	// Step executes after the last normal step and receives that step's name and result.
-	Step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error
+	Step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult StepResult) error
 }
 
 // NewFinalStep creates an always-run final step.
 func NewFinalStep[K client.Object, C Context[K]](
 	name string,
-	step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error,
+	step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult StepResult) error,
 ) FinalStep[K, C] {
 	return FinalStep[K, C]{
 		Name: name,
@@ -184,17 +186,17 @@ type Step[K client.Object, C Context[K]] struct {
 	Name string
 
 	// Step is the function to execute
-	Step func(ctx C, logger logr.Logger, req ctrl.Request) GenericStepResult
+	Step func(ctx C, logger logr.Logger, req ctrl.Request) StepResult
 }
 
-func NewStep[K client.Object, C Context[K]](name string, step func(ctx C, logger logr.Logger, req ctrl.Request) GenericStepResult) Step[K, C] {
+func NewStep[K client.Object, C Context[K]](name string, step func(ctx C, logger logr.Logger, req ctrl.Request) StepResult) Step[K, C] {
 	return Step[K, C]{
 		Name: name,
 		Step: step,
 	}
 }
 
-func mergeFinalStepResult(result GenericStepResult, finalErr error) GenericStepResult {
+func mergeFinalStepResult(result StepResult, finalErr error) StepResult {
 	if finalErr == nil {
 		return result
 	}
@@ -206,7 +208,7 @@ func mergeFinalStepResult(result GenericStepResult, finalErr error) GenericStepR
 	return ResultInError(finalErr)
 }
 
-func (stepper *Stepper[K, C]) executeFinalStep(ctx C, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error {
+func (stepper *Stepper[K, C]) executeFinalStep(ctx C, req ctrl.Request, lastStepName string, lastStepResult StepResult) error {
 	if stepper.final == nil || stepper.final.Step == nil {
 		return nil
 	}
@@ -229,7 +231,7 @@ func (stepper *Stepper[K, C]) Execute(ctx C, req ctrl.Request) (ctrl.Result, err
 
 	startedAt := time.Now()
 	lastStepName := ""
-	lastStepResult := ResultSuccess()
+	var lastStepResult StepResult = ResultSuccess()
 
 	logger.Info("Starting stepper execution")
 

@@ -19,7 +19,7 @@ func NewAddFinalizerStep[
 ) Step[ControllerResourceType, ContextType] {
 	return Step[ControllerResourceType, ContextType]{
 		Name: fmt.Sprintf(StepAddFinalizer, finalizerName),
-		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) GenericStepResult {
+		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) StepResult {
 			cr := ctx.GetCustomResource()
 
 			if IsFinalizing(cr) {

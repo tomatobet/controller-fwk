@@ -20,11 +20,11 @@ func NewReconcileResourceStep[
 ) Step[ControllerResourceType, ContextType] {
 	return Step[ControllerResourceType, ContextType]{
 		Name: fmt.Sprintf(StepReconcileResource, resource.Kind()),
-		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) GenericStepResult {
+		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) StepResult {
 			var desired client.Object
-			var result GenericStepResult
+			var result StepResult
 
-			funcResult := func() GenericStepResult {
+			funcResult := func() StepResult {
 				cr := ctx.GetCustomResource()
 				resourcePaused := false
 
@@ -149,8 +149,8 @@ func getDesiredObject[
 ](
 	reconciler Reconciler[ControllerResourceType],
 	resource GenericResource[ControllerResourceType, ContextType],
-) func(ctx ContextType, req ctrl.Request) (client.Object, GenericStepResult) {
-	return func(ctx ContextType, req ctrl.Request) (client.Object, GenericStepResult) {
+) func(ctx ContextType, req ctrl.Request) (client.Object, StepResult) {
+	return func(ctx ContextType, req ctrl.Request) (client.Object, StepResult) {
 		desired, delete, err := resource.ObjectMetaGenerator()
 		if delete {
 			if desired != nil && desired.GetName() != "" {

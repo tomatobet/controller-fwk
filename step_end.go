@@ -20,7 +20,7 @@ func NewEndStep[
 ) Step[ControllerResourceType, ContextType] {
 	return Step[ControllerResourceType, ContextType]{
 		Name: StepEndReconciliation,
-		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) GenericStepResult {
+		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) StepResult {
 			cr := ctx.GetCustomResource()
 
 			// Set Ready condition
@@ -55,11 +55,11 @@ func NewReadyConditionFinalStep[
 ](
 	_ ContextType,
 	reconciler Reconciler[ControllerResourceType],
-	setReadyCondF func(ControllerResourceType, string, GenericStepResult) (bool, error),
+	setReadyCondF func(ControllerResourceType, string, StepResult) (bool, error),
 ) FinalStep[ControllerResourceType, ContextType] {
 	return NewFinalStep(
 		StepEndReconciliation,
-		func(ctx ContextType, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error {
+		func(ctx ContextType, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult StepResult) error {
 			if setReadyCondF == nil {
 				return nil
 			}
