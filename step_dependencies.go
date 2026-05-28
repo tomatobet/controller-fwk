@@ -16,13 +16,13 @@ func NewResolveDynamicDependenciesStep[
 ) Step[ControllerResourceType, ContextType] {
 	return Step[ControllerResourceType, ContextType]{
 		Name: StepResolveDependencies,
-		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) StepResult {
+		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) GenericStepResult {
 			dependencies, err := reconciler.GetDependencies(ctx, req)
 			if err != nil {
 				return ResultInError(errors.Wrap(err, "failed to get dependencies"))
 			}
 
-			var returnResults []StepResult
+			var returnResults []GenericStepResult
 
 			// Add the finalizer to clean up "managed by" references
 			// in dependencies when the CR is deleted
@@ -47,8 +47,8 @@ func NewResolveDynamicDependenciesStep[
 
 			// Return result errors first
 			for _, result := range returnResults {
-				if result.err != nil {
-					if IsFinalizing(ctx.GetCustomResource()) && apierrors.IsNotFound(result.err) {
+				if result.Error() != nil {
+					if IsFinalizing(ctx.GetCustomResource()) && apierrors.IsNotFound(result.Error()) {
 						continue
 					}
 					return result

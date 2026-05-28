@@ -20,8 +20,8 @@ func SetupWatch[
 	reconciler ReconcilerWithWatcher[ControllerResourceType],
 	object client.Object,
 	isDependency bool,
-) func(ctx Context[ControllerResourceType], req ctrl.Request) StepResult {
-	return func(ctx Context[ControllerResourceType], req ctrl.Request) StepResult {
+) func(ctx Context[ControllerResourceType], req ctrl.Request) GenericStepResult {
+	return func(ctx Context[ControllerResourceType], req ctrl.Request) GenericStepResult {
 		// Setup watch if not already set
 		var partialObject metav1.PartialObjectMetadata
 		var partialObjectInterface client.Object = &partialObject

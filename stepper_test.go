@@ -30,10 +30,10 @@ func TestStepper_WithFinalStep_RunsAfterSuccess(t *testing.T) {
 	gotSuccess := false
 
 	stepper := ctrlfwk.NewStepperFor(ctx, logr.Discard()).
-		WithStep(ctrlfwk.NewStep("prepare", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.StepResult {
+		WithStep(ctrlfwk.NewStep("prepare", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.GenericStepResult {
 			return ctrlfwk.ResultSuccess()
 		})).
-		WithFinalStep(ctrlfwk.NewFinalStep("finalize", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult ctrlfwk.StepResult) error {
+		WithFinalStep(ctrlfwk.NewFinalStep("finalize", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult ctrlfwk.GenericStepResult) error {
 			called = true
 			gotLastStepName = lastStepName
 			gotSuccess = lastStepResult.IsSuccess()
@@ -66,10 +66,10 @@ func TestStepper_WithFinalStep_RunsAfterError(t *testing.T) {
 	called := false
 
 	stepper := ctrlfwk.NewStepperFor(ctx, logr.Discard()).
-		WithStep(ctrlfwk.NewStep("resolve dependency", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.StepResult {
+		WithStep(ctrlfwk.NewStep("resolve dependency", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.GenericStepResult {
 			return ctrlfwk.ResultInError(stepErr)
 		})).
-		WithFinalStep(ctrlfwk.NewFinalStep("finalize", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult ctrlfwk.StepResult) error {
+		WithFinalStep(ctrlfwk.NewFinalStep("finalize", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult ctrlfwk.GenericStepResult) error {
 			called = true
 			if lastStepName != "resolve dependency" {
 				return errors.New("unexpected last step name")
@@ -96,10 +96,10 @@ func TestStepper_WithFinalStep_JoinsFinalStepError(t *testing.T) {
 	finalErr := errors.New("final step failed")
 
 	stepper := ctrlfwk.NewStepperFor(ctx, logr.Discard()).
-		WithStep(ctrlfwk.NewStep("reconcile resource", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.StepResult {
+		WithStep(ctrlfwk.NewStep("reconcile resource", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.GenericStepResult {
 			return ctrlfwk.ResultInError(stepErr)
 		})).
-		WithFinalStep(ctrlfwk.NewFinalStep("finalize", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult ctrlfwk.StepResult) error {
+		WithFinalStep(ctrlfwk.NewFinalStep("finalize", func(ctx *stepperTestContext, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult ctrlfwk.GenericStepResult) error {
 			return finalErr
 		})).
 		Build()
@@ -120,7 +120,7 @@ func TestNewReadyConditionFinalStep_SkipsWhenControllerResourceWasNotLoaded(t *t
 	finalStep := ctrlfwk.NewReadyConditionFinalStep[*corev1.ConfigMap](
 		ctx,
 		ctrlfwk.Reconciler[*corev1.ConfigMap](nil),
-		func(obj *corev1.ConfigMap, lastStepName string, lastStepResult ctrlfwk.StepResult) (bool, error) {
+		func(obj *corev1.ConfigMap, lastStepName string, lastStepResult ctrlfwk.GenericStepResult) (bool, error) {
 			called = true
 			return true, nil
 		},

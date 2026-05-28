@@ -69,8 +69,8 @@ func SetReadyCondition[ControllerResourceType client.Object](_ Reconciler[Contro
 //
 // Successful reconciliations set Ready to True. Errors, requeues, and early returns set Ready
 // to False with a message describing the last executed step.
-func SetReadyConditionFromResult[ControllerResourceType client.Object](_ Reconciler[ControllerResourceType]) func(obj ControllerResourceType, lastStepName string, lastStepResult StepResult) (bool, error) {
-	return func(obj ControllerResourceType, lastStepName string, lastStepResult StepResult) (bool, error) {
+func SetReadyConditionFromResult[ControllerResourceType client.Object](_ Reconciler[ControllerResourceType]) func(obj ControllerResourceType, lastStepName string, lastStepResult GenericStepResult) (bool, error) {
+	return func(obj ControllerResourceType, lastStepName string, lastStepResult GenericStepResult) (bool, error) {
 		status := metav1.ConditionTrue
 		reason := "Reconciled"
 		message := "The resource is ready"

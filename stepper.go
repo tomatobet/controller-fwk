@@ -12,7 +12,7 @@ import (
 
 // Stepper is a utility to execute a series of steps in a controller.
 // It allows for easy chaining of steps and handling of errors and requeues.
-// Each step can be a function that returns a StepResult, which indicates
+// Each step can be a function that returns a GenericStepResult, which indicates
 // whether to continue, requeue, or return an error.
 // The Stepper can be used in a controller's Reconcile function to manage
 // the execution of multiple steps in a clean and organized manner.
@@ -63,6 +63,29 @@ func (s *StepperBuilder[K, C]) Build() *Stepper[K, C] {
 	}
 }
 
+type GenericStepResult interface {
+	// Error returns the underlying step error, if any.
+	Error() error
+
+	// RequeueAfter returns the requested requeue duration, if any.
+	RequeueAfter() time.Duration
+
+	// IsEarlyReturn reports whether the step requested an early return without error.
+	IsEarlyReturn() bool
+
+	// IsSuccess reports whether the step completed without error, requeue, or early return.
+	IsSuccess() bool
+
+	// ShouldReturn reports whether reconciliation should stop after this step.
+	ShouldReturn() bool
+
+	// FromSubStep clears early return semantics when bubbling a nested step result upward.
+	FromSubStep() GenericStepResult
+
+	// Normal converts the step result into a controller-runtime reconcile result.
+	Normal() (ctrl.Result, error)
+}
+
 type StepResult struct {
 	earlyReturn  bool
 	err          error
@@ -95,7 +118,7 @@ func (result StepResult) ShouldReturn() bool {
 }
 
 // FromSubStep clears early return semantics when bubbling a nested step result upward.
-func (result StepResult) FromSubStep() StepResult {
+func (result StepResult) FromSubStep() GenericStepResult {
 	result.earlyReturn = false
 	return result
 }
@@ -111,25 +134,25 @@ func (result StepResult) Normal() (ctrl.Result, error) {
 	return ctrl.Result{}, nil
 }
 
-func ResultInError(err error) StepResult {
+func ResultInError(err error) GenericStepResult {
 	return StepResult{
 		err: err,
 	}
 }
 
-func ResultRequeueIn(result time.Duration) StepResult {
+func ResultRequeueIn(result time.Duration) GenericStepResult {
 	return StepResult{
 		requeueAfter: result,
 	}
 }
 
-func ResultEarlyReturn() StepResult {
+func ResultEarlyReturn() GenericStepResult {
 	return StepResult{
 		earlyReturn: true,
 	}
 }
 
-func ResultSuccess() StepResult {
+func ResultSuccess() GenericStepResult {
 	return StepResult{}
 }
 
@@ -142,13 +165,13 @@ type FinalStep[K client.Object, C Context[K]] struct {
 	Name string
 
 	// Step executes after the last normal step and receives that step's name and result.
-	Step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult StepResult) error
+	Step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error
 }
 
 // NewFinalStep creates an always-run final step.
 func NewFinalStep[K client.Object, C Context[K]](
 	name string,
-	step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult StepResult) error,
+	step func(ctx C, logger logr.Logger, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error,
 ) FinalStep[K, C] {
 	return FinalStep[K, C]{
 		Name: name,
@@ -161,30 +184,29 @@ type Step[K client.Object, C Context[K]] struct {
 	Name string
 
 	// Step is the function to execute
-	Step func(ctx C, logger logr.Logger, req ctrl.Request) StepResult
+	Step func(ctx C, logger logr.Logger, req ctrl.Request) GenericStepResult
 }
 
-func NewStep[K client.Object, C Context[K]](name string, step func(ctx C, logger logr.Logger, req ctrl.Request) StepResult) Step[K, C] {
+func NewStep[K client.Object, C Context[K]](name string, step func(ctx C, logger logr.Logger, req ctrl.Request) GenericStepResult) Step[K, C] {
 	return Step[K, C]{
 		Name: name,
 		Step: step,
 	}
 }
 
-func mergeFinalStepResult(result StepResult, finalErr error) StepResult {
+func mergeFinalStepResult(result GenericStepResult, finalErr error) GenericStepResult {
 	if finalErr == nil {
 		return result
 	}
 
-	if result.err != nil {
-		result.err = errors.Join(result.err, finalErr)
-		return result
+	if result.Error() != nil {
+		return ResultInError(errors.Join(result.Error(), finalErr))
 	}
 
 	return ResultInError(finalErr)
 }
 
-func (stepper *Stepper[K, C]) executeFinalStep(ctx C, req ctrl.Request, lastStepName string, lastStepResult StepResult) error {
+func (stepper *Stepper[K, C]) executeFinalStep(ctx C, req ctrl.Request, lastStepName string, lastStepResult GenericStepResult) error {
 	if stepper.final == nil || stepper.final.Step == nil {
 		return nil
 	}
@@ -221,15 +243,15 @@ func (stepper *Stepper[K, C]) Execute(ctx C, req ctrl.Request) (ctrl.Result, err
 		if result.ShouldReturn() {
 			resultToReturn := result
 
-			if result.err != nil {
-				if IsFinalizing(ctx.GetCustomResource()) && apierrors.IsNotFound(result.err) {
+			if result.Error() != nil {
+				if IsFinalizing(ctx.GetCustomResource()) && apierrors.IsNotFound(result.Error()) {
 					logger.Info("Resource not found during finalization, ignoring error", "step", step.Name, "stepDuration", stepDuration)
 					resultToReturn = ResultRequeueIn(1 * time.Second)
 				} else {
-					logger.Error(result.err, "Error in step", "step", step.Name, "stepDuration", stepDuration)
+					logger.Error(result.Error(), "Error in step", "step", step.Name, "stepDuration", stepDuration)
 				}
-			} else if result.requeueAfter > 0 {
-				logger.Info("Requeueing after step", "step", step.Name, "after", result.requeueAfter, "stepDuration", stepDuration)
+			} else if result.RequeueAfter() > 0 {
+				logger.Info("Requeueing after step", "step", step.Name, "after", result.RequeueAfter(), "stepDuration", stepDuration)
 			} else {
 				logger.Info("Early return after step", "step", step.Name, "stepDuration", stepDuration)
 			}

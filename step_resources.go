@@ -15,13 +15,13 @@ func NewReconcileResourcesStep[
 ) Step[ControllerResourceType, ContextType] {
 	return Step[ControllerResourceType, ContextType]{
 		Name: StepReconcileResources,
-		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) StepResult {
+		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) GenericStepResult {
 			resources, err := reconciler.GetResources(ctx, req)
 			if err != nil {
 				return ResultInError(errors.Wrap(err, "failed to get resources"))
 			}
 
-			var returnResults []StepResult
+			var returnResults []GenericStepResult
 
 			for _, resource := range resources {
 				subStepLogger := logger.WithValues("resource", resource.ID())
@@ -38,7 +38,7 @@ func NewReconcileResourcesStep[
 
 			// Return result errors first
 			for _, result := range returnResults {
-				if result.err != nil {
+				if result.Error() != nil {
 					return result
 				}
 			}

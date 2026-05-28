@@ -21,10 +21,10 @@ func NewResolveDependencyStep[
 ) Step[ControllerResourceType, ContextType] {
 	return Step[ControllerResourceType, ContextType]{
 		Name: fmt.Sprintf(StepResolveDependency, dependency.Kind()),
-		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) StepResult {
+		Step: func(ctx ContextType, logger logr.Logger, req ctrl.Request) GenericStepResult {
 			var dep client.Object
 
-			funcResult := func() StepResult {
+			funcResult := func() GenericStepResult {
 				if err := dependency.BeforeReconcile(ctx); err != nil {
 					return ResultInError(errors.Wrap(err, "failed to run BeforeReconcile hook"))
 				}
