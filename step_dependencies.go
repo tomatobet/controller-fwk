@@ -47,8 +47,8 @@ func NewResolveDynamicDependenciesStep[
 
 			// Return result errors first
 			for _, result := range returnResults {
-				if result.err != nil {
-					if IsFinalizing(ctx.GetCustomResource()) && apierrors.IsNotFound(result.err) {
+				if result.Error() != nil {
+					if IsFinalizing(ctx.GetCustomResource()) && apierrors.IsNotFound(result.Error()) {
 						continue
 					}
 					return result

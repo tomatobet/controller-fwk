@@ -38,7 +38,7 @@ func NewReconcileResourcesStep[
 
 			// Return result errors first
 			for _, result := range returnResults {
-				if result.err != nil {
+				if result.Error() != nil {
 					return result
 				}
 			}
