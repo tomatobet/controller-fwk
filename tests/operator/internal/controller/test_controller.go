@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 
+	"github.com/go-logr/logr"
 	ctrlfwk "github.com/u-ctf/controller-fwk"
 	"github.com/u-ctf/controller-fwk/instrument"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -46,10 +47,12 @@ type TestReconciler struct {
 
 func (TestReconciler) For(*testv1.Test) {}
 
-var _ ctrlfwk.Reconciler[*testv1.Test] = &TestReconciler{}
-var _ ctrlfwk.ReconcilerWithDependencies[*testv1.Test, testv1.TestContext] = &TestReconciler{}
-var _ ctrlfwk.ReconcilerWithResources[*testv1.Test, testv1.TestContext] = &TestReconciler{}
-var _ ctrlfwk.ReconcilerWithWatcher[*testv1.Test] = &TestReconciler{}
+var (
+	_ ctrlfwk.Reconciler[*testv1.Test]                                     = &TestReconciler{}
+	_ ctrlfwk.ReconcilerWithDependencies[*testv1.Test, testv1.TestContext] = &TestReconciler{}
+	_ ctrlfwk.ReconcilerWithResources[*testv1.Test, testv1.TestContext]    = &TestReconciler{}
+	_ ctrlfwk.ReconcilerWithWatcher[*testv1.Test]                          = &TestReconciler{}
+)
 
 // +kubebuilder:rbac:groups=test.example.com,resources=tests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=test.example.com,resources=tests/status,verbs=get;update;patch
@@ -88,10 +91,20 @@ func (reconciler *TestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		WithStep(ctrlfwk.NewFindControllerCustomResourceStep(context, reconciler)).
 		WithStep(ctrlfwk.NewResolveDynamicDependenciesStep(context, reconciler)).
 		WithStep(ctrlfwk.NewReconcileResourcesStep(context, reconciler)).
+		WithStep(newDummyStep()).
 		WithFinalStep(ctrlfwk.NewReadyConditionFinalStep(context, reconciler, ctrlfwk.SetReadyConditionFromResult(reconciler))).
 		Build()
 
 	return stepper.Execute(context, req)
+}
+
+func newDummyStep() ctrlfwk.Step[*testv1.Test, testv1.TestContext] {
+	return ctrlfwk.NewStep(
+		"dummy-step",
+		func(ctx testv1.TestContext, logger logr.Logger, req ctrl.Request) ctrlfwk.StepResult {
+			return ctrlfwk.ResultSuccess()
+		},
+	)
 }
 
 // SetupWithManager sets up the controller with the Manager.
